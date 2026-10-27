@@ -1,11 +1,13 @@
 version: '3.8'
 services:       
   mysqldb:
+    container_name: mysqldb
     image: pavanreddy215/phpbloodbank:db
     ports:
       - "3306:3306"
 
-  app:
+  myapp:
+    container_name: myapp
     image: pavanreddy215/phpbloodbank:app
     ports:
       - "1111:80"
