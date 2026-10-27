@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    stages {
+        stage('Code') {
+            steps {
+                git 'https://github.com/pavanreddy215/PHPProjectBloodBank.git'
+            }
+        }
+        stage('CQA') {
+            environment {
+                scannerHome = tool 'mysonar'
+            }
+            steps {
+                   withSonarQubeEnv('MySonar') {
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=MyProject"
+                }
+            }
+        }
+        stage('Image') {
+            steps {
+                sh 'docker build -t pavanreddy215/phpbloodbank:app .'
+                sh 'docker build -t pavanreddy215/phpbloodbank:db database'
+            }
+        }
+        stage ('ImageScan') {
+            steps {
+                sh 'trivy image pavanreddy215/phpbloodbank:app'
+                sh 'trivy image pavanreddy215/phpbloodbank:db'
+            }
+        }
+        stage ('Registry') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'dockerhub') {
+                        sh 'docker push pavanreddy215/phpbloodbank:app'
+                        sh 'docker push pavanreddy215/phpbloodbank:db'
+                    }
+                }
+            }
+        }
+        stage ('Deploy'){
+            steps {
+                sh 'docker-compose up -d'
+            }
+        }
+    }
+}
